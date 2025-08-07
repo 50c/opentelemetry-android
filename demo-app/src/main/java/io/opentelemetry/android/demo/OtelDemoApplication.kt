@@ -38,11 +38,7 @@ class OtelDemoApplication : Application() {
 
         // 10.0.2.2 is apparently a special binding to the host running the emulator
         try {
-            rum = OpenTelemetryRumInitializer.initialize(
-                application = this,
-                endpointBaseUrl = "http://10.0.2.2:4318",
-                rumConfig = config
-            )
+            rum = initRum(config)
             Log.d(TAG, "RUM session started: " + rum!!.rumSessionId)
         } catch (e: Exception) {
             Log.e(TAG, "Oh no!", e)
@@ -51,6 +47,21 @@ class OtelDemoApplication : Application() {
         // This is needed to get R8 missing rules warnings.
         initializeOtelWithGrpc()
     }
+
+    private fun initRum(config: OtelRumConfig): OpenTelemetryRum =
+        TestOpenTelemetryRumInitializer.initialize(
+            application = this,
+            endpointBaseUrl = "http://10.0.2.2:4317",
+            rumConfig = config
+        )
+
+
+    private fun initRumOriginal(config: OtelRumConfig): OpenTelemetryRum=
+        OpenTelemetryRumInitializer.initialize(
+            application = this,
+            endpointBaseUrl = "http://10.0.2.2:4318",
+            rumConfig = config
+        )
 
     // This is not used but it's needed to verify that our consumer proguard rules cover this use case.
     private fun initializeOtelWithGrpc() {

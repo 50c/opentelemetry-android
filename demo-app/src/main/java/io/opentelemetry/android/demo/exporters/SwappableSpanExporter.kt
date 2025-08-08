@@ -20,10 +20,23 @@ import android.util.Log as AndroidLog
 class SwappableSpanExporter(delegate: SpanExporter) : SpanExporter {
 
     private val holder: AtomicReference<SpanExporter> = AtomicReference(delegate)
+    private val flushBeforeShutdown: Boolean = false
 
     fun swap(newDelegate: SpanExporter){
-        holder.get().flush().whenComplete { shutdown() }
+        val oldExporter = holder.get()
+        val isSameInstance = oldExporter === newDelegate
+        AndroidLog.d(TAG, "Swapping SpanExporter (same instance: $isSameInstance) ${oldExporter.javaClass.name} with: ${newDelegate.javaClass.name} ...")
         holder.set(newDelegate)
+        AndroidLog.d(TAG, "Swapping SpanExporter. Shutdown old exporter: ${oldExporter.javaClass.name} ...")
+        if( !flushBeforeShutdown ) {
+            AndroidLog.d(TAG, "old SpanExporter: ${oldExporter.javaClass.name}.shutdown()")
+            oldExporter.shutdown()
+            return
+        }
+        oldExporter.flush().whenComplete {
+            AndroidLog.d(TAG, "old SpanExporter: ${oldExporter.javaClass.name}.shutdown()")
+            oldExporter.shutdown()
+        }
     }
 
     override fun export(spans: Collection<SpanData?>): CompletableResultCode? {
@@ -43,14 +56,23 @@ class SwappableSpanExporter(delegate: SpanExporter) : SpanExporter {
 class SwappableLogRecordExporter(delegate: LogRecordExporter) : LogRecordExporter {
 
     private val holder: AtomicReference<LogRecordExporter> = AtomicReference(delegate)
+    private val flushBeforeShutdown: Boolean = false
 
     fun swap(newDelegate: LogRecordExporter){
         val oldExporter = holder.get()
-        AndroidLog.d(TAG, "Swapping LogRecordExporter. Shutdown old exporter: ${oldExporter.javaClass.name} ...")
-        oldExporter.flush().whenComplete { shutdown() }
-        holder.set(newDelegate)
         val isSameInstance = oldExporter === newDelegate
-        AndroidLog.d(TAG, "Swapped LogRecordExporter with new delegate: ${newDelegate.javaClass.name}. Is same instance: $isSameInstance")
+        AndroidLog.d(TAG, "Swapping LogRecordExporter (same instance: $isSameInstance) ${oldExporter.javaClass.name} with: ${newDelegate.javaClass.name} ...")
+        holder.set(newDelegate)
+        AndroidLog.d(TAG, "Swapping LogRecordExporter. Shutdown old exporter: ${oldExporter.javaClass.name} ...")
+        if( !flushBeforeShutdown ) {
+            AndroidLog.d(TAG, "old LogRecordExporter: ${oldExporter.javaClass.name}.shutdown()")
+            oldExporter.shutdown()
+            return
+        }
+        oldExporter.flush().whenComplete {
+            AndroidLog.d(TAG, "old LogRecordExporter: ${oldExporter.javaClass.name}.shutdown()")
+            oldExporter.shutdown()
+        }
     }
 
     override fun export(logs: MutableCollection<LogRecordData>): CompletableResultCode =
@@ -69,14 +91,23 @@ class SwappableLogRecordExporter(delegate: LogRecordExporter) : LogRecordExporte
 class SwappableMetricExporter(delegate: MetricExporter) : MetricExporter {
 
     private val holder: AtomicReference<MetricExporter> = AtomicReference(delegate)
+    private val flushBeforeShutdown: Boolean = false
 
     fun swap(newDelegate: MetricExporter){
         val oldExporter = holder.get()
-        AndroidLog.d(TAG, "Swapping MetricExporter. Shutdown old exporter: ${oldExporter.javaClass.name} ...")
-        oldExporter.flush().whenComplete { shutdown() }
-        holder.set(newDelegate)
         val isSameInstance = oldExporter === newDelegate
-        AndroidLog.d(TAG, "Swapped MetricExporter with new delegate: ${newDelegate.javaClass.name}. Is same instance: $isSameInstance")
+        AndroidLog.d(TAG, "Swapping MetricExporter (same instance: $isSameInstance) ${oldExporter.javaClass.name} with: ${newDelegate.javaClass.name} ...")
+        holder.set(newDelegate)
+        AndroidLog.d(TAG, "Swapping MetricExporter. Shutdown old exporter: ${oldExporter.javaClass.name} ...")
+        if( !flushBeforeShutdown ) {
+            AndroidLog.d(TAG, "old MetricExporter: ${oldExporter.javaClass.name}.shutdown()")
+            oldExporter.shutdown()
+            return
+        }
+        oldExporter.flush().whenComplete {
+            AndroidLog.d(TAG, "old MetricExporter: ${oldExporter.javaClass.name}.shutdown()")
+            oldExporter.shutdown()
+        }
     }
 
     override fun getAggregationTemporality(instrumentType: InstrumentType): AggregationTemporality =

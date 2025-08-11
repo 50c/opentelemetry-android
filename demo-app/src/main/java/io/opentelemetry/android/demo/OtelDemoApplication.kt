@@ -40,6 +40,11 @@ class OtelDemoApplication : Application() {
         try {
             rum = initRum(config)
             Log.d(TAG, "RUM session started: " + rum!!.rumSessionId)
+            eventBuilder("tst scope", "tst event")
+                .setAttribute("test attribute", "test value")
+                .setBody("This is a test event")
+                .setSeverityText("DEBUG")
+                .emit()
         } catch (e: Exception) {
             Log.e(TAG, "Oh no!", e)
         }

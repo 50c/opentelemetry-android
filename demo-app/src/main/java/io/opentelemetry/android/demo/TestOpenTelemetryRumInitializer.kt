@@ -35,6 +35,8 @@ import io.opentelemetry.android.session.SessionObserver
 import io.opentelemetry.android.session.SessionProvider
 import io.opentelemetry.android.session.SessionPublisher
 import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.exporter.logging.LoggingSpanExporter
+import io.opentelemetry.exporter.logging.otlp.internal.logs.OtlpStdoutLogRecordExporter
 import io.opentelemetry.exporter.otlp.logs.OtlpGrpcLogRecordExporter
 import io.opentelemetry.exporter.otlp.metrics.OtlpGrpcMetricExporter
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
@@ -46,8 +48,8 @@ import io.opentelemetry.sdk.trace.export.SpanExporter
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.time.delay
 import java.time.Duration
 import java.util.Collections.synchronizedList
 
@@ -58,8 +60,8 @@ object TestOpenTelemetryRumInitializer {
         .setInitialBackoff(Duration.ofMillis(1))
         .build()
 
-    val callTimeout = Duration.ofSeconds(2)
-    val connectTimeout = Duration.ofSeconds(2)
+    val callTimeout = Duration.ofSeconds(5)
+    val connectTimeout = Duration.ofSeconds(5)
 
     val coroutineScope = CoroutineScope(Dispatchers.IO + CoroutineName("otel-rum-initializer"))
 
@@ -135,20 +137,23 @@ object TestOpenTelemetryRumInitializer {
             .setSessionProvider(createSessionProvider(application, sessionConfig))
             .addSpanExporterCustomizer {
                 swappableSpanExporter
-            }.addLogRecordExporterCustomizer {
+            }
+            .addLogRecordExporterCustomizer {
                 swappableLogRecordExporter
-            }.addMetricExporterCustomizer {
+            }
+            .addMetricExporterCustomizer {
                 swappableMetricExporter
             }
 
         coroutineScope.launch {
             while (true) {
-                Log.d(TAG, "Rotating exporters after 2 seconds ...")
-                delay(2000) // rotate every 10 seconds
+                val rotationPeriod= Duration.ofSeconds(2)
+                Log.d(TAG, "Rotating exporters after ${rotationPeriod.toSeconds()} seconds ...")
+                delay(rotationPeriod) // rotate every 2 seconds
                 Log.d(TAG, "Rotating exporters ...")
                 swappableLogRecordExporter.swap(createLogRecordExporter(logEndpointConnectivity))
-                swappableSpanExporter.swap(createSpanExporter(spanEndpointConnectivity))
-                swappableMetricExporter.swap(createMetricExporter(metricEndpointConnectivity))
+                //swappableSpanExporter.swap(createSpanExporter(spanEndpointConnectivity))
+                //swappableMetricExporter.swap(createMetricExporter(metricEndpointConnectivity))
                 Log.d(TAG, "Rotating exporters done.")
             }
         }
@@ -172,25 +177,31 @@ object TestOpenTelemetryRumInitializer {
 
     private fun createLogRecordExporter(
         logEndpointConnectivity: EndpointConnectivity
-    ): LogRecordExporter = OtlpGrpcLogRecordExporter
-        .builder()
-        .setRetryPolicy(retryPolicy)
-        .setTimeout(callTimeout)
-        .setConnectTimeout(connectTimeout)
-        .setEndpoint(logEndpointConnectivity.getUrl())
-        .setHeaders(logEndpointConnectivity::getHeaders)
-        .build()
+    ): LogRecordExporter {
+        //return OtlpStdoutLogRecordExporter.builder().build()
+        return OtlpGrpcLogRecordExporter
+            .builder()
+            .setRetryPolicy(retryPolicy)
+            .setTimeout(callTimeout)
+            .setConnectTimeout(connectTimeout)
+            .setEndpoint(logEndpointConnectivity.getUrl())
+            .setHeaders(logEndpointConnectivity::getHeaders)
+            .build()
+    }
 
     private fun createSpanExporter(
         spanEndpointConnectivity: EndpointConnectivity
-    ): SpanExporter = OtlpGrpcSpanExporter
-        .builder()
-        .setRetryPolicy(retryPolicy)
-        .setTimeout(callTimeout)
-        .setConnectTimeout(connectTimeout)
-        .setEndpoint(spanEndpointConnectivity.getUrl())
-        .setHeaders(spanEndpointConnectivity::getHeaders)
-        .build()
+    ): SpanExporter {
+        return LoggingSpanExporter.create()
+        return OtlpGrpcSpanExporter
+            .builder()
+            .setRetryPolicy(retryPolicy)
+            .setTimeout(callTimeout)
+            .setConnectTimeout(connectTimeout)
+            .setEndpoint(spanEndpointConnectivity.getUrl())
+            .setHeaders(spanEndpointConnectivity::getHeaders)
+            .build()
+    }
 
     private fun createSessionProvider(
         application: Application,

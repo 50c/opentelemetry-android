@@ -152,8 +152,8 @@ object TestOpenTelemetryRumInitializer {
                 delay(rotationPeriod) // rotate every 2 seconds
                 Log.d(TAG, "Rotating exporters ...")
                 swappableLogRecordExporter.swap(createLogRecordExporter(logEndpointConnectivity))
-                //swappableSpanExporter.swap(createSpanExporter(spanEndpointConnectivity))
-                //swappableMetricExporter.swap(createMetricExporter(metricEndpointConnectivity))
+                swappableSpanExporter.swap(createSpanExporter(spanEndpointConnectivity))
+                swappableMetricExporter.swap(createMetricExporter(metricEndpointConnectivity))
                 Log.d(TAG, "Rotating exporters done.")
             }
         }

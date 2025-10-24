@@ -69,12 +69,12 @@ dependencies {
 
     coreLibraryDesugaring(libs.desugarJdkLibs)
 
-    implementation("io.opentelemetry.android:instrumentation-compose-click")
-    implementation("io.opentelemetry.android:android-agent")    //parent dir
-    implementation("io.opentelemetry.android:instrumentation-sessions")
-    implementation("io.opentelemetry:opentelemetry-exporter-logging:1.52.0")
-    implementation("io.opentelemetry:opentelemetry-exporter-logging-otlp:1.52.0")
-    implementation("io.opentelemetry:opentelemetry-exporter-otlp:1.52.0")
+    implementation(libs.instrumentation.compose.click)
+    implementation(libs.android.agent)    //parent dir
+    implementation(libs.instrumentation.sessions)
+    implementation(libs.opentelemetry.exporter.logging)
+    implementation(libs.opentelemetry.exporter.logging.otlp)
+    implementation(libs.opentelemetry.exporter.otlp)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
